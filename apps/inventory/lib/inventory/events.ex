@@ -15,6 +15,15 @@ defmodule Inventory.Event do
 
     quote do
       defstruct unquote(fields)
+
+      def create(attrs \\ []) do
+        base = [
+          id: Id.generate(),
+          timestamp: Timestamp.now()
+        ]
+
+        struct(__MODULE__, base ++ attrs)
+      end
     end
   end
 end
