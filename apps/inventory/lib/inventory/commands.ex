@@ -1,43 +1,69 @@
-defmodule Inventory.Command do
-  @moduledoc """
-  "Do something"
+defmodule Command do
+  defmacro __using__(_env) do
+    quote do
+      import Command
+    end
+  end
+
+  @doc """
+  Define Command
+
+  Example:
+      use Command
+      defbox CheckedIn,  count: integer()
+
+  generates:
+      defmodule CheckedIn do
+        @type t :: %__MODULE__{
+          id:   Id.t(),
+          timestamp: Timestamp.t(),
+          count: integer()
+        }
+        @enforce_keys [:id, :timestamp, :count]
+        defstruct [:id, :timestamp, :count]
+      end
   """
+  defmacro defcommand(name, attrs \\ []) do
+    attrs =
+      [
+        id: quote(do: Id.t()),
+        timestamp: quote(do: Timestamp.t())
+      ] ++ attrs
 
-  @cmd_fields [
-    :id,
-    :timestamp
-  ]
-
-  defmacro __using__(opts) do
-    fields = @cmd_fields ++ Keyword.get(opts, :fields, [])
+    keys = Keyword.keys(attrs)
 
     quote do
-      defstruct unquote(fields)
+      defmodule unquote(name) do
+        @enforce_keys unquote(keys)
+        defstruct unquote(keys)
 
-      def create(attrs \\ []) do
-        base = [
-          id: Id.generate(),
-          timestamp: Timestamp.now()
-        ]
+        @type t :: %__MODULE__{
+                unquote_splicing(attrs)
+              }
 
-        struct(__MODULE__, base ++ attrs)
+        def create(attrs \\ []) do
+          attrs = [
+            id: Id.generate(),
+            timestamp: Timestamp.now()
+          ] ++ attrs
+
+          struct!(__MODULE__, attrs)
+        end
       end
     end
   end
 end
 
-defmodule Inventory.Commands.Create do
-  use Inventory.Command, fields: []
-end
+defmodule Inventory.Commands do
+  use Command
 
-defmodule Inventory.Commands.CheckIn do
-  use Inventory.Command, fields: []
-end
+  defcommand Create
 
-defmodule Inventory.Commands.CheckOut do
-  use Inventory.Command, fields: []
-end
+  defcommand CheckIn,
+    count: integer
 
-defmodule Inventory.Commands.Deactivate do
-  use Inventory.Command, fields: []
+  defcommand CheckOut,
+    count: integer
+
+  defcommand Deactivate
 end
