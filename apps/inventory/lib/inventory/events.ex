@@ -1,5 +1,14 @@
 defmodule Inventory.Event do
-  @event_fields [:id, :timestamp]
+  @moduledoc """
+  "You have done something"
+  """
+
+  @event_fields [
+    :id,
+    :timestamp,
+    :correlation_id,
+    :causation_id
+  ]
 
   defmacro __using__(opts) do
     fields = @event_fields ++ Keyword.get(opts, :fields, [])
